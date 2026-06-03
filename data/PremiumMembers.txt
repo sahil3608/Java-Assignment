@@ -1,0 +1,13 @@
+======= PREMIUM MEMBER RECORD =======
+Member ID                 : 1002
+Name                      : Cristiano Ronaldo
+Age                       : 40
+Phone                     : 57894653
+Membership Type           : Premium
+Weight                    : 78.0 kg
+Height                    : 1.86 m
+BMI                       : 22.55
+BMI Status                : Normal
+Premium Benefit           : Free Personal Trainer
+Personal Trainer Included : true
+=====================================

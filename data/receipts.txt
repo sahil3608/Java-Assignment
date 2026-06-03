@@ -1,0 +1,11 @@
+=============== PAYMENT RECEIPT ===============
+Receipt ID      : 3002
+Member ID       : 1001
+Member Name     : Surakshit Kessoonath
+Membership Type : Normal
+Amount Paid     : Rs 16200.0
+Payment Method  : Cash
+Payment Date    : 2026-06-03
+Expiry Date     : 2027-09-03
+Status          : PAID
+================================================

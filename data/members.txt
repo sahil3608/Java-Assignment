@@ -1,0 +1,12 @@
+ 
+=========== MEMBER RECORD ===========
+Member ID       : 1001
+Name            : Surakshit Kessoonath
+Age             : 21
+Phone           : 59034561
+Membership Type : Normal
+Weight          : 81.0 kg
+Height          : 1.86 m
+BMI             : 23.41
+BMI Status      : Normal
+=====================================

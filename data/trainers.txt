@@ -1,0 +1,8 @@
+=========== TRAINER RECORD ===========
+Trainer ID     : 2001
+Name           : Michael Carrick
+Age            : 30
+Phone          : 56784013
+Specialization : Nutrition Coaching
+Salary         : Rs 40000.05
+======================================
