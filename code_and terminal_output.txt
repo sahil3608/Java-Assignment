@@ -1,0 +1,1621 @@
+Main.java
+------------------------------
+// Imports Scanner.
+import java.util.Scanner;
+
+// Main class starts the program.
+public class Main {
+
+    // Main method.
+    public static void main(String[] args) {
+
+        // Creates GymService object.
+        GymService gymService = new GymService();
+
+        // Creates Scanner object.
+        Scanner input = new Scanner(System.in);
+
+        // Stores menu choice.
+        int choice = 0;
+
+        // Runs menu until user exits.
+        do {
+            System.out.println("\n========== GymPro Manager ==========");
+            System.out.println("1. Add Member");
+            System.out.println("2. Add Premium Member");
+            System.out.println("3. View Members");
+            System.out.println("4. Update Member");
+            System.out.println("5. Delete Member");
+            System.out.println("6. Add Trainer");
+            System.out.println("7. View Trainers");
+            System.out.println("8. Process Payment");
+            System.out.println("9. Record Attendance");
+            System.out.println("10. View Payments");
+            System.out.println("11. Monthly Income Report");
+            System.out.println("12. Member BMI Statistics");
+            System.out.println("13. Validation Rules");
+            System.out.println("14. Exit");
+            System.out.print("Enter your choice: ");
+
+            if (input.hasNextInt()) {
+                choice = input.nextInt();
+            } else {
+                input.nextLine();
+                System.out.println("Invalid choice. Please enter a number.");
+                continue;
+            }
+
+            switch (choice) {
+                case 1:
+                    gymService.addMember();
+                    break;
+
+                case 2:
+                    gymService.addPremiumMember();
+                    break;
+
+                case 3:
+                    gymService.viewMembers();
+                    break;
+
+                case 4:
+                    gymService.updateMember();
+                    break;
+
+                case 5:
+                    gymService.deleteMember();
+                    break;
+
+                case 6:
+                    gymService.addTrainer();
+                    break;
+
+                case 7:
+                    gymService.viewTrainers();
+                    break;
+
+                case 8:
+                    gymService.processPayment();
+                    break;
+
+                case 9:
+                    gymService.recordAttendance();
+                    break;
+
+                case 10:
+                    gymService.viewPayments();
+                    break;
+
+                case 11:
+                    gymService.monthlyIncomeReport();
+                    break;
+
+                case 12:
+                    gymService.memberStatisticsReport();
+                    break;
+
+                case 13:
+                    ValidationUtil.displayValidationRules();
+                    break;
+
+                case 14:
+                    System.out.println("Thank you for using GymPro Manager.");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Please choose between 1 and 14.");
+            }
+
+        } while (choice != 14);
+
+        input.close();
+    }
+}
+
+---------------------------------------------------------------------------------------------------------------------------
+
+GymService.java
+----------------------------
+// Imports LocalDate.
+import java.time.LocalDate;
+
+// Imports ArrayList.
+import java.util.ArrayList;
+
+// Imports Scanner.
+import java.util.Scanner;
+
+// GymService contains main business logic.
+public class GymService {
+
+    // Stores members.
+    private ArrayList<Member> members;
+
+    // Stores trainers.
+    private ArrayList<Trainer> trainers;
+
+    // Stores payments.
+    private ArrayList<Payment> payments;
+
+    // Stores attendance records.
+    private ArrayList<Attendance> attendanceList;
+
+    // Scanner for user input.
+    private Scanner input = new Scanner(System.in);
+
+    // Constructor loads old data from files.
+    public GymService() {
+        members = FileManager.loadMembers();
+        trainers = FileManager.loadTrainers();
+        payments = FileManager.loadPayments();
+        attendanceList = FileManager.loadAttendance();
+    }
+
+    // Generates new member ID.
+    private int generateMemberId() {
+        int max = 1000;
+
+        for (Member member : members) {
+            if (member.getId() > max) {
+                max = member.getId();
+            }
+        }
+
+        return max + 1;
+    }
+
+    // Generates new trainer ID.
+    private int generateTrainerId() {
+        int max = 2000;
+
+        for (Trainer trainer : trainers) {
+            if (trainer.getId() > max) {
+                max = trainer.getId();
+            }
+        }
+
+        return max + 1;
+    }
+
+    // Generates new payment ID.
+    private int generatePaymentId() {
+        int max = 3000;
+
+        for (Payment payment : payments) {
+            if (payment.getPaymentId() > max) {
+                max = payment.getPaymentId();
+            }
+        }
+
+        return max + 1;
+    }
+
+    // Generates new attendance ID.
+    private int generateAttendanceId() {
+        int max = 4000;
+
+        for (Attendance attendance : attendanceList) {
+            if (attendance.getAttendanceId() > max) {
+                max = attendance.getAttendanceId();
+            }
+        }
+
+        return max + 1;
+    }
+
+    // Reads positive integer.
+    private int readPositiveInt(String message) {
+        int value;
+
+        while (true) {
+            System.out.print(message);
+
+            if (input.hasNextInt()) {
+                value = input.nextInt();
+                input.nextLine();
+
+                if (ValidationUtil.isPositiveInt(value)) {
+                    return value;
+                }
+            } else {
+                input.nextLine();
+            }
+
+            System.out.println("Invalid input. Please enter a positive number.");
+        }
+    }
+
+    // Reads positive double.
+    private double readPositiveDouble(String message) {
+        double value;
+
+        while (true) {
+            System.out.print(message);
+
+            if (input.hasNextDouble()) {
+                value = input.nextDouble();
+                input.nextLine();
+
+                if (ValidationUtil.isPositiveDouble(value)) {
+                    return value;
+                }
+            } else {
+                input.nextLine();
+            }
+
+            System.out.println("Invalid input. Please enter a positive decimal number.");
+        }
+    }
+
+    // Reads non-empty text.
+    private String readText(String message) {
+        String value;
+
+        while (true) {
+            System.out.print(message);
+            value = input.nextLine();
+
+            if (ValidationUtil.isValidText(value)) {
+                return value;
+            }
+
+            System.out.println("Input cannot be empty.");
+        }
+    }
+
+    // Reads valid age.
+    private int readValidAge() {
+        int age;
+
+        while (true) {
+            age = readPositiveInt("Enter Age: ");
+
+            if (ValidationUtil.isValidAge(age)) {
+                return age;
+            }
+
+            System.out.println("Invalid age. Age must be between 12 and 100.");
+        }
+    }
+
+    // Reads valid phone number.
+    private String readValidPhone() {
+        String phone;
+
+        while (true) {
+            phone = readText("Enter Phone: ");
+
+            if (ValidationUtil.isValidPhone(phone)) {
+                return phone;
+            }
+
+            System.out.println("Invalid phone. Phone must contain 7 to 10 digits.");
+        }
+    }
+
+    // Finds member by ID.
+    private Member findMemberById(int id) {
+        for (Member member : members) {
+            if (member.getId() == id) {
+                return member;
+            }
+        }
+
+        return null;
+    }
+
+    // Rewrites members file.
+    private void rewriteMembersFile() {
+        ArrayList<String> lines = new ArrayList<>();
+
+        for (Member member : members) {
+            lines.add(member.toFileFormat());
+        }
+
+        FileManager.rewriteFile(FileManager.MEMBER_FILE, lines);
+    }
+
+    // Adds a new normal member.
+    public void addMember() {
+        int id = generateMemberId();
+
+        System.out.println("Generated Member ID: " + id);
+
+        String name = readText("Enter Name: ");
+        int age = readValidAge();
+        String phone = readValidPhone();
+        String type = readText("Enter Membership Type: ");
+        double weight = readPositiveDouble("Enter Weight in kg: ");
+        double height = readPositiveDouble("Enter Height in meters: ");
+
+        Member member = new Member(id, name, age, phone, type, weight, height);
+
+        members.add(member);
+
+        FileManager.saveLine(FileManager.MEMBER_FILE, member.toFileFormat());
+
+        System.out.println("Member added successfully.");
+    }
+
+    // Adds a premium member.
+    public void addPremiumMember() {
+        int id = generateMemberId();
+
+        System.out.println("Generated Premium Member ID: " + id);
+
+        String name = readText("Enter Name: ");
+        int age = readValidAge();
+        String phone = readValidPhone();
+        String type = "Premium";
+        double weight = readPositiveDouble("Enter Weight in kg: ");
+        double height = readPositiveDouble("Enter Height in meters: ");
+        String benefit = readText("Enter Premium Benefit: ");
+
+        PremiumMember premiumMember = new PremiumMember(id, name, age, phone, type, weight, height, benefit, true);
+
+        members.add(premiumMember);
+
+        FileManager.saveLine(FileManager.PREMIUM_MEMBER_FILE, premiumMember.toFileFormat());
+
+        System.out.println("Premium member added successfully.");
+    }
+
+    // Views all members.
+    public void viewMembers() {
+        if (members.isEmpty()) {
+            System.out.println("No members available.");
+            return;
+        }
+
+        for (Member member : members) {
+            member.displayInfo();
+        }
+    }
+
+    // Updates member details.
+    public void updateMember() {
+        int id = readPositiveInt("Enter Member ID to update: ");
+        Member member = findMemberById(id);
+
+        if (member == null) {
+            System.out.println("Member not found.");
+            return;
+        }
+
+        member.setName(readText("Enter New Name: "));
+        member.setAge(readValidAge());
+        member.setPhone(readValidPhone());
+        member.setMembershipType(readText("Enter New Membership Type: "));
+        member.setWeight(readPositiveDouble("Enter New Weight: "));
+        member.setHeight(readPositiveDouble("Enter New Height: "));
+
+        rewriteMembersFile();
+
+        System.out.println("Member updated successfully and file rewritten.");
+    }
+
+    // Deletes member.
+    public void deleteMember() {
+        int id = readPositiveInt("Enter Member ID to delete: ");
+        Member member = findMemberById(id);
+
+        if (member == null) {
+            System.out.println("Member not found.");
+            return;
+        }
+
+        members.remove(member);
+
+        rewriteMembersFile();
+
+        System.out.println("Member deleted successfully and file rewritten.");
+    }
+
+    // Adds trainer.
+    public void addTrainer() {
+        int id = generateTrainerId();
+
+        System.out.println("Generated Trainer ID: " + id);
+
+        String name = readText("Enter Trainer Name: ");
+        int age = readValidAge();
+        String phone = readValidPhone();
+        String specialization = readText("Enter Specialization: ");
+        double salary = readPositiveDouble("Enter Salary: ");
+
+        Trainer trainer = new Trainer(id, name, age, phone, specialization, salary);
+
+        trainers.add(trainer);
+
+        FileManager.saveLine(FileManager.TRAINER_FILE, trainer.toFileFormat());
+
+        System.out.println("Trainer added successfully.");
+    }
+
+    // Views all trainers.
+    public void viewTrainers() {
+        if (trainers.isEmpty()) {
+            System.out.println("No trainers available.");
+            return;
+        }
+
+        for (Trainer trainer : trainers) {
+            trainer.displayInfo();
+        }
+    }
+
+    // Processes payment.
+    public void processPayment() {
+        int paymentId = generatePaymentId();
+
+        System.out.println("Generated Payment ID: " + paymentId);
+
+        int memberId = readPositiveInt("Enter Member ID: ");
+        Member member = findMemberById(memberId);
+
+        if (member == null) {
+            System.out.println("Payment failed. Member does not exist.");
+            return;
+        }
+
+        int months = readPositiveInt("Enter Plan Duration in Months: ");
+        double monthlyFee = readPositiveDouble("Enter Monthly Fee: ");
+        String method = readText("Enter Payment Method: ");
+
+        MembershipPlan plan = new MembershipPlan(member.getMembershipType(), months, monthlyFee);
+
+        double finalAmount;
+
+        if (member instanceof PremiumMember) {
+            finalAmount = plan.calculatePremiumFinalAmount();
+            System.out.println("Premium Discount Applied: Rs " + plan.calculatePremiumDiscount());
+        } else {
+            finalAmount = plan.calculateFinalAmount();
+            System.out.println("Normal Discount Applied: Rs " + plan.calculateDiscount());
+        }
+
+        System.out.println("--------------------------------");
+        System.out.println("Payment Calculation");
+        System.out.println("Total Fee: Rs " + plan.calculateTotalFee());
+        System.out.println("Final Amount: Rs " + finalAmount);
+
+        Payment payment = new Payment(paymentId, memberId, finalAmount, method);
+
+        payments.add(payment);
+
+        FileManager.saveLine(FileManager.PAYMENT_FILE, payment.toFileFormat());
+
+        System.out.println("Payment processed successfully.");
+    }
+
+    // Records attendance.
+    public void recordAttendance() {
+        int attendanceId = generateAttendanceId();
+
+        System.out.println("Generated Attendance ID: " + attendanceId);
+
+        int memberId = readPositiveInt("Enter Member ID: ");
+        Member member = findMemberById(memberId);
+
+        if (member == null) {
+            System.out.println("Attendance failed. Member does not exist.");
+            return;
+        }
+
+        Attendance attendance = new Attendance(attendanceId, memberId);
+
+        attendanceList.add(attendance);
+
+        FileManager.saveLine(FileManager.ATTENDANCE_FILE, attendance.toFileFormat());
+
+        System.out.println("Attendance recorded successfully.");
+    }
+
+    // Views payments.
+    public void viewPayments() {
+        if (payments.isEmpty()) {
+            System.out.println("No payments available.");
+            return;
+        }
+
+        for (Payment payment : payments) {
+            payment.displayPayment();
+        }
+    }
+
+    // Generates monthly income report.
+    public void monthlyIncomeReport() {
+        int month = readPositiveInt("Enter month number, example 1 for January: ");
+        int year = readPositiveInt("Enter year, example 2026: ");
+
+        ReportGenerator.displayMonthlyIncomeReport(payments, month, year);
+
+        double total = ReportGenerator.calculateMonthlyIncome(payments, month, year);
+
+        FileManager.saveLine(FileManager.REPORT_FILE,
+                "Monthly Income Report," + month + "," + year + ",Rs " + total);
+    }
+
+    // Displays member BMI statistics.
+    public void memberStatisticsReport() {
+        ReportGenerator.displayMemberStatistics(members);
+    }
+}
+
+---------------------------------------------------------------------------------------------------------------------------
+FileManager.java
+-----------------------------
+// Imports file classes.
+import java.io.*;
+
+// Imports LocalDate.
+import java.time.LocalDate;
+
+// Imports ArrayList.
+import java.util.ArrayList;
+
+// FileManager handles all file storage operations.
+public class FileManager {
+
+    // File path for normal members text file.
+public static final String MEMBER_FILE =
+"C:/Users/DELL/Downloads/GymProManager/data/members.txt";
+
+// File path for premium members text file.
+public static final String PREMIUM_MEMBER_FILE =
+"C:/Users/DELL/Downloads/GymProManager/data/PremiumMembers.txt";
+
+// File path for trainers text file.
+public static final String TRAINER_FILE =
+"C:/Users/DELL/Downloads/GymProManager/data/trainers.txt";
+
+// File path for payments text file.
+public static final String PAYMENT_FILE =
+"C:/Users/DELL/Downloads/GymProManager/data/payments.txt";
+
+// File path for attendance text file.
+public static final String ATTENDANCE_FILE =
+"C:/Users/DELL/Downloads/GymProManager/data/attendance.txt";
+
+// File path for reports text file.
+public static final String REPORT_FILE =
+"C:/Users/DELL/Downloads/GymProManager/data/reports.txt";
+
+    // Saves one line into a file.
+    public static void saveLine(String filePath, String data) {
+        try {
+            FileWriter writer = new FileWriter(filePath, true);
+            writer.write(data + "\n");
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("File writing error: " + e.getMessage());
+        }
+    }
+
+    // Rewrites the whole file with updated data.
+    public static void rewriteFile(String filePath, ArrayList<String> lines) {
+        try {
+            FileWriter writer = new FileWriter(filePath, false);
+
+            for (String line : lines) {
+                writer.write(line + "\n");
+            }
+
+            writer.close();
+        } catch (IOException e) {
+            System.out.println("File rewrite error: " + e.getMessage());
+        }
+    }
+
+    // Loads normal members from file.
+    public static ArrayList<Member> loadMembers() {
+        ArrayList<Member> members = new ArrayList<>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(MEMBER_FILE));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+
+                if (data.length == 7) {
+                    Member member = new Member(
+                            Integer.parseInt(data[0]),
+                            data[1],
+                            Integer.parseInt(data[2]),
+                            data[3],
+                            data[4],
+                            Double.parseDouble(data[5]),
+                            Double.parseDouble(data[6])
+                    );
+
+                    members.add(member);
+                }
+            }
+
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("No previous member data found.");
+        }
+
+        return members;
+    }
+
+    // Loads trainers from file.
+    public static ArrayList<Trainer> loadTrainers() {
+        ArrayList<Trainer> trainers = new ArrayList<>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(TRAINER_FILE));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+
+                if (data.length == 6) {
+                    Trainer trainer = new Trainer(
+                            Integer.parseInt(data[0]),
+                            data[1],
+                            Integer.parseInt(data[2]),
+                            data[3],
+                            data[4],
+                            Double.parseDouble(data[5])
+                    );
+
+                    trainers.add(trainer);
+                }
+            }
+
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("No previous trainer data found.");
+        }
+
+        return trainers;
+    }
+
+    // Loads payments from file.
+    public static ArrayList<Payment> loadPayments() {
+        ArrayList<Payment> payments = new ArrayList<>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(PAYMENT_FILE));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+
+                if (data.length == 5) {
+                    Payment payment = new Payment(
+                            Integer.parseInt(data[0]),
+                            Integer.parseInt(data[1]),
+                            Double.parseDouble(data[2]),
+                            data[3],
+                            LocalDate.parse(data[4])
+                    );
+
+                    payments.add(payment);
+                }
+            }
+
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("No previous payment data found.");
+        }
+
+        return payments;
+    }
+
+    // Loads attendance from file.
+    public static ArrayList<Attendance> loadAttendance() {
+        ArrayList<Attendance> attendanceList = new ArrayList<>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(ATTENDANCE_FILE));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                String[] data = line.split(",");
+
+                if (data.length == 3) {
+                    Attendance attendance = new Attendance(
+                            Integer.parseInt(data[0]),
+                            Integer.parseInt(data[1]),
+                            LocalDate.parse(data[2])
+                    );
+
+                    attendanceList.add(attendance);
+                }
+            }
+
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("No previous attendance data found.");
+        }
+
+        return attendanceList;
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+ReportGenerator.java
+----------------------------------------------
+// Imports ArrayList.
+import java.util.ArrayList;
+
+// Imports LocalDate.
+import java.time.LocalDate;
+
+// ReportGenerator handles report calculations.
+public class ReportGenerator {
+
+    // Calculates monthly income.
+    public static double calculateMonthlyIncome(ArrayList<Payment> payments, int month, int year) {
+        double totalIncome = 0;
+
+        for (Payment payment : payments) {
+            LocalDate date = payment.getPaymentDate();
+
+            if (date.getMonthValue() == month && date.getYear() == year) {
+                totalIncome += payment.getAmount();
+            }
+        }
+
+        return totalIncome;
+    }
+
+    // Counts payments for selected month and year.
+    public static int countMonthlyPayments(ArrayList<Payment> payments, int month, int year) {
+        int count = 0;
+
+        for (Payment payment : payments) {
+            LocalDate date = payment.getPaymentDate();
+
+            if (date.getMonthValue() == month && date.getYear() == year) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    // Displays monthly income report.
+    public static void displayMonthlyIncomeReport(ArrayList<Payment> payments, int month, int year) {
+        double totalIncome = calculateMonthlyIncome(payments, month, year);
+        int paymentCount = countMonthlyPayments(payments, month, year);
+
+        System.out.println("--------------------------------");
+        System.out.println("MONTHLY INCOME REPORT");
+        System.out.println("Month: " + month);
+        System.out.println("Year: " + year);
+        System.out.println("Number of Payments: " + paymentCount);
+        System.out.println("Total Income: Rs " + totalIncome);
+    }
+
+    // Displays BMI category statistics.
+    public static void displayMemberStatistics(ArrayList<Member> members) {
+        int underweight = 0;
+        int normal = 0;
+        int overweight = 0;
+        int obese = 0;
+
+        for (Member member : members) {
+            String status = member.getBMIStatus();
+
+            if (status.equalsIgnoreCase("Underweight")) {
+                underweight++;
+            } else if (status.equalsIgnoreCase("Normal")) {
+                normal++;
+            } else if (status.equalsIgnoreCase("Overweight")) {
+                overweight++;
+            } else if (status.equalsIgnoreCase("Obese")) {
+                obese++;
+            }
+        }
+
+        System.out.println("--------------------------------");
+        System.out.println("MEMBER BMI STATISTICS");
+        System.out.println("Total Members: " + members.size());
+        System.out.println("Underweight Members: " + underweight);
+        System.out.println("Normal Members: " + normal);
+        System.out.println("Overweight Members: " + overweight);
+        System.out.println("Obese Members: " + obese);
+    }
+}
+
+---------------------------------------------------------------------------------------------------------------------------
+MembershipPlan.java
+------------------------------------------------
+// MembershipPlan handles gym fee calculations.
+public class MembershipPlan {
+
+    // Stores plan name.
+    private String planName;
+
+    // Stores plan duration in months.
+    private int durationMonths;
+
+    // Stores monthly fee.
+    private double monthlyFee;
+
+    // Constructor to initialize membership plan.
+    public MembershipPlan(String planName, int durationMonths, double monthlyFee) {
+        this.planName = planName;
+        this.durationMonths = durationMonths;
+        this.monthlyFee = monthlyFee;
+    }
+
+    // Calculates total membership fee.
+    public double calculateTotalFee() {
+        return monthlyFee * durationMonths;
+    }
+
+    // Calculates normal discount.
+    public double calculateDiscount() {
+        if (durationMonths >= 12) {
+            return calculateTotalFee() * 0.20;
+        } else if (durationMonths >= 6) {
+            return calculateTotalFee() * 0.10;
+        } else {
+            return 0;
+        }
+    }
+
+    // Calculates premium discount.
+    public double calculatePremiumDiscount() {
+        return calculateTotalFee() * 0.25;
+    }
+
+    // Calculates final amount for normal members.
+    public double calculateFinalAmount() {
+        return calculateTotalFee() - calculateDiscount();
+    }
+
+    // Calculates final amount for premium members.
+    public double calculatePremiumFinalAmount() {
+        return calculateTotalFee() - calculatePremiumDiscount();
+    }
+
+    // Displays normal membership calculation.
+    public void displayPlanCalculation() {
+        System.out.println("--------------------------------");
+        System.out.println("Membership Plan: " + planName);
+        System.out.println("Duration: " + durationMonths + " months");
+        System.out.println("Monthly Fee: Rs " + monthlyFee);
+        System.out.println("Total Fee: Rs " + calculateTotalFee());
+        System.out.println("Discount: Rs " + calculateDiscount());
+        System.out.println("Final Amount: Rs " + calculateFinalAmount());
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+ValidationUtil.java
+--------------------------------------------------
+// ValidationUtil handles input validation.
+public class ValidationUtil {
+
+    // Checks if text is not empty.
+    public static boolean isValidText(String text) {
+        return text != null && !text.trim().isEmpty();
+    }
+
+    // Checks if integer is positive.
+    public static boolean isPositiveInt(int number) {
+        return number > 0;
+    }
+
+    // Checks if decimal number is positive.
+    public static boolean isPositiveDouble(double number) {
+        return number > 0;
+    }
+
+    // Checks valid gym member age.
+    public static boolean isValidAge(int age) {
+        return age >= 12 && age <= 100;
+    }
+
+    // Checks phone number length and digits.
+    public static boolean isValidPhone(String phone) {
+        return phone != null && phone.matches("\\d{7,10}");
+    }
+
+    // Checks realistic height.
+    public static boolean isValidHeight(double height) {
+        return height >= 0.5 && height <= 2.5;
+    }
+
+    // Checks realistic weight.
+    public static boolean isValidWeight(double weight) {
+        return weight >= 20 && weight <= 250;
+    }
+
+    // Displays validation rules.
+    public static void displayValidationRules() {
+        System.out.println("--------------------------------");
+        System.out.println("Validation Rules");
+        System.out.println("Name cannot be empty.");
+        System.out.println("Age must be between 12 and 100.");
+        System.out.println("Phone must contain 7 to 10 digits.");
+        System.out.println("Height must be between 0.5m and 2.5m.");
+        System.out.println("Weight must be between 20kg and 250kg.");
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+Member.java
+-----------------------------------------
+// Member class represents a normal gym member.
+public class Member extends Person {
+
+    // Stores the membership type.
+    private String membershipType;
+
+    // Stores member weight in kilograms.
+    private double weight;
+
+    // Stores member height in meters.
+    private double height;
+
+    // Constructor to initialize member details.
+    public Member(int id, String name, int age, String phone, String membershipType, double weight, double height) {
+        super(id, name, age, phone);          // Calls parent constructor.
+        this.membershipType = membershipType; // Assigns membership type.
+        this.weight = weight;                 // Assigns weight.
+        this.height = height;                 // Assigns height.
+    }
+
+    // Returns membership type.
+    public String getMembershipType() {
+        return membershipType;
+    }
+
+    // Returns weight.
+    public double getWeight() {
+        return weight;
+    }
+
+    // Returns height.
+    public double getHeight() {
+        return height;
+    }
+
+    // Updates membership type.
+    public void setMembershipType(String membershipType) {
+        this.membershipType = membershipType;
+    }
+
+    // Updates weight.
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
+
+    // Updates height.
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    // Calculates BMI using BMIUtil.
+    public double calculateBMI() {
+        return BMIUtil.calculateBMI(weight, height);
+    }
+
+    // Returns BMI status using BMIUtil.
+    public String getBMIStatus() {
+        return BMIUtil.getBMIStatus(calculateBMI());
+    }
+
+    // Displays member information.
+    @Override
+    public void displayInfo() {
+        System.out.println("--------------------------------");
+        System.out.println("Member ID: " + getId());
+        System.out.println("Name: " + getName());
+        System.out.println("Age: " + getAge());
+        System.out.println("Phone: " + getPhone());
+        System.out.println("Membership Type: " + membershipType);
+        System.out.println("Weight: " + weight + " kg");
+        System.out.println("Height: " + height + " m");
+        System.out.printf("BMI: %.2f\n", calculateBMI());
+        System.out.println("BMI Status: " + getBMIStatus());
+    }
+
+    // Converts member object into text file format.
+    public String toFileFormat() {
+        return getId() + "," + getName() + "," + getAge() + "," + getPhone() + "," +
+                membershipType + "," + weight + "," + height;
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------
+PremiumMember.java
+--------------------------------------------
+// PremiumMember is a specialized type of Member.
+public class PremiumMember extends Member {
+
+    // Stores premium benefit description.
+    private String premiumBenefit;
+
+    // Stores personal trainer availability.
+    private boolean personalTrainerIncluded;
+
+    // Constructor to initialize premium member.
+    public PremiumMember(int id, String name, int age, String phone, String membershipType,
+                         double weight, double height, String premiumBenefit,
+                         boolean personalTrainerIncluded) {
+
+        super(id, name, age, phone, membershipType, weight, height); // Calls Member constructor.
+        this.premiumBenefit = premiumBenefit;                       // Assigns benefit.
+        this.personalTrainerIncluded = personalTrainerIncluded;     // Assigns trainer status.
+    }
+
+    // Returns premium benefit.
+    public String getPremiumBenefit() {
+        return premiumBenefit;
+    }
+
+    // Returns true if personal trainer is included.
+    public boolean isPersonalTrainerIncluded() {
+        return personalTrainerIncluded;
+    }
+
+    // Displays premium member information.
+    @Override
+    public void displayInfo() {
+        super.displayInfo(); // Displays normal member details.
+        System.out.println("Premium Benefit: " + premiumBenefit);
+        System.out.println("Personal Trainer Included: " + personalTrainerIncluded);
+    }
+
+    // Converts premium member object into text file format.
+    @Override
+    public String toFileFormat() {
+        return super.toFileFormat() + "," + premiumBenefit + "," + personalTrainerIncluded;
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+Trainer.java
+-------------------------------------------------
+// Trainer class represents a gym trainer.
+public class Trainer extends Person {
+
+    // Stores trainer specialization.
+    private String specialization;
+
+    // Stores trainer salary.
+    private double salary;
+
+    // Constructor to initialize trainer details.
+    public Trainer(int id, String name, int age, String phone, String specialization, double salary) {
+        super(id, name, age, phone);          // Calls Person constructor.
+        this.specialization = specialization; // Assigns specialization.
+        this.salary = salary;                 // Assigns salary.
+    }
+
+    // Returns specialization.
+    public String getSpecialization() {
+        return specialization;
+    }
+
+    // Returns salary.
+    public double getSalary() {
+        return salary;
+    }
+
+    // Displays trainer information.
+    @Override
+    public void displayInfo() {
+        System.out.println("--------------------------------");
+        System.out.println("Trainer ID: " + getId());
+        System.out.println("Name: " + getName());
+        System.out.println("Age: " + getAge());
+        System.out.println("Phone: " + getPhone());
+        System.out.println("Specialization: " + specialization);
+        System.out.println("Salary: Rs " + salary);
+    }
+
+    // Converts trainer object into text file format.
+    public String toFileFormat() {
+        return getId() + "," + getName() + "," + getAge() + "," + getPhone() + "," +
+                specialization + "," + salary;
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------
+Payment.java
+--------------------------------------------------
+// Imports LocalDate for payment date.
+import java.time.LocalDate;
+
+// Payment class stores payment details.
+public class Payment {
+
+    // Stores payment ID.
+    private int paymentId;
+
+    // Stores member ID linked to payment.
+    private int memberId;
+
+    // Stores payment amount.
+    private double amount;
+
+    // Stores payment method.
+    private String paymentMethod;
+
+    // Stores payment date.
+    private LocalDate paymentDate;
+
+    // Constructor with custom date.
+    public Payment(int paymentId, int memberId, double amount, String paymentMethod, LocalDate paymentDate) {
+        this.paymentId = paymentId;
+        this.memberId = memberId;
+        this.amount = amount;
+        this.paymentMethod = paymentMethod;
+        this.paymentDate = paymentDate;
+    }
+
+    // Constructor using current date automatically.
+    public Payment(int paymentId, int memberId, double amount, String paymentMethod) {
+        this(paymentId, memberId, amount, paymentMethod, LocalDate.now());
+    }
+
+    // Returns payment ID.
+    public int getPaymentId() {
+        return paymentId;
+    }
+
+    // Returns member ID.
+    public int getMemberId() {
+        return memberId;
+    }
+
+    // Returns payment amount.
+    public double getAmount() {
+        return amount;
+    }
+
+    // Returns payment date.
+    public LocalDate getPaymentDate() {
+        return paymentDate;
+    }
+
+    // Displays payment information.
+    public void displayPayment() {
+        System.out.println("--------------------------------");
+        System.out.println("Payment ID: " + paymentId);
+        System.out.println("Member ID: " + memberId);
+        System.out.println("Amount Paid: Rs " + amount);
+        System.out.println("Payment Method: " + paymentMethod);
+        System.out.println("Payment Date: " + paymentDate);
+    }
+
+    // Converts payment object into text file format.
+    public String toFileFormat() {
+        return paymentId + "," + memberId + "," + amount + "," + paymentMethod + "," + paymentDate;
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+Attendance.java
+-----------------------------------------------
+// Imports LocalDate for attendance date.
+import java.time.LocalDate;
+
+// Attendance class stores attendance records.
+public class Attendance {
+
+    // Stores attendance ID.
+    private int attendanceId;
+
+    // Stores member ID.
+    private int memberId;
+
+    // Stores attendance date.
+    private LocalDate date;
+
+    // Constructor with custom date.
+    public Attendance(int attendanceId, int memberId, LocalDate date) {
+        this.attendanceId = attendanceId;
+        this.memberId = memberId;
+        this.date = date;
+    }
+
+    // Constructor using current date automatically.
+    public Attendance(int attendanceId, int memberId) {
+        this(attendanceId, memberId, LocalDate.now());
+    }
+
+    // Returns attendance ID.
+    public int getAttendanceId() {
+        return attendanceId;
+    }
+
+    // Displays attendance details.
+    public void displayAttendance() {
+        System.out.println("--------------------------------");
+        System.out.println("Attendance ID: " + attendanceId);
+        System.out.println("Member ID: " + memberId);
+        System.out.println("Attendance Date: " + date);
+    }
+
+    // Converts attendance object into text file format.
+    public String toFileFormat() {
+        return attendanceId + "," + memberId + "," + date;
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+
+Person.java
+---------------------------------------------
+// Person is an abstract parent class for common person details.
+public abstract class Person {
+
+    // Stores the unique ID of a person.
+    private int id;
+
+    // Stores the name of a person.
+    private String name;
+
+    // Stores the age of a person.
+    private int age;
+
+    // Stores the phone number of a person.
+    private String phone;
+
+    // Constructor to initialize common person details.
+    public Person(int id, String name, int age, String phone) {
+        this.id = id;          // Assigns ID.
+        this.name = name;      // Assigns name.
+        this.age = age;        // Assigns age.
+        this.phone = phone;    // Assigns phone.
+    }
+
+    // Returns the ID.
+    public int getId() {
+        return id;
+    }
+
+    // Returns the name.
+    public String getName() {
+        return name;
+    }
+
+    // Returns the age.
+    public int getAge() {
+        return age;
+    }
+
+    // Returns the phone number.
+    public String getPhone() {
+        return phone;
+    }
+
+    // Updates the name.
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    // Updates the age.
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    // Updates the phone number.
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    // Abstract method to be implemented by child classes.
+    public abstract void displayInfo();
+}
+---------------------------------------------------------------------------------------------------------------------------
+BMIUtil.java
+--------------------------------------------------------
+
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 1
+Generated Member ID: 1001
+Enter Name: Surakshit kessoonath
+Enter Age: 21
+Enter Phone: 59034561
+Enter Membership Type: Normal
+Enter Weight in kg: 81
+Enter Height in meters: 1.86
+Member added successfully.
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 3
+--------------------------------
+Member ID: 1001
+Name: Surakshit kessoonath
+Age: 21
+Phone: 59034561
+Membership Type: Normal
+Weight: 81.0 kg
+Height: 1.86 m
+BMI: 23.41
+BMI Status: Normal
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 2
+Generated Premium Member ID: 1002
+Enter Name: Cristiano Ronaldo
+Enter Age: 40
+Enter Phone: 57894653
+Enter Weight in kg: 78
+Enter Height in meters: 1.86
+Enter Premium Benefit: Free Personal Trainer
+Premium member added successfully.
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 6
+Generated Trainer ID: 2001
+Enter Trainer Name: michael Carrick
+Enter Age: 30
+Enter Phone: 56784013
+Enter Specialization: Nutrition Coaching     
+Enter Salary: 40000.05
+Trainer added successfully.
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 8
+Generated Payment ID: 3001
+Enter Member ID: 1001
+Enter Plan Duration in Months: 15
+Enter Monthly Fee: 1350.00
+Enter Payment Method: Cash
+Normal Discount Applied: Rs 4050.0
+--------------------------------
+Payment Calculation
+Total Fee: Rs 20250.0
+Final Amount: Rs 16200.0
+Payment processed successfully.
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 9
+Generated Attendance ID: 4001
+Enter Member ID: 1001
+Attendance recorded successfully.
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 10
+--------------------------------
+Payment ID: 3001
+Member ID: 1001
+Amount Paid: Rs 16200.0
+Payment Method: Cash
+Payment Date: 2026-06-02
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 11
+Enter month number, example 1 for January: 2  
+Enter year, example 2026: 2026
+--------------------------------
+MONTHLY INCOME REPORT
+Month: 2
+Year: 2026
+Number of Payments: 0
+Total Income: Rs 0.0
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 11
+Enter month number, example 1 for January: 1
+Enter year, example 2026: 2026
+--------------------------------
+MONTHLY INCOME REPORT
+Month: 1
+Year: 2026
+Number of Payments: 0
+Total Income: Rs 0.0
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 11
+Enter month number, example 1 for January: 6
+Enter year, example 2026: 2026
+--------------------------------
+MONTHLY INCOME REPORT
+Month: 6
+Year: 2026
+Number of Payments: 1
+Total Income: Rs 16200.0
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 12
+--------------------------------
+MEMBER BMI STATISTICS
+Total Members: 2
+Underweight Members: 0
+Normal Members: 2
+Overweight Members: 0
+Obese Members: 0
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 13
+--------------------------------
+Validation Rules
+Name cannot be empty.
+Age must be between 12 and 100.
+Phone must contain 7 to 10 digits.
+Height must be between 0.5m and 2.5m.
+Weight must be between 20kg and 250kg.
+
+========== GymPro Manager ==========
+1. Add Member
+2. Add Premium Member
+3. View Members
+4. Update Member
+5. Delete Member
+6. Add Trainer
+7. View Trainers
+8. Process Payment
+9. Record Attendance
+10. View Payments
+11. Monthly Income Report
+12. Member BMI Statistics
+13. Validation Rules
+14. Exit
+Enter your choice: 
+
+
